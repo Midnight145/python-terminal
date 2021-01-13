@@ -1,7 +1,6 @@
+import importlib
 import sys, os
-from commands.directory import cd, pwd
-from commands.file import touch, chmod
-
+import commands.coreutils
 
 class Command:
     def __init__(self, com):
@@ -13,18 +12,24 @@ class Command:
         pass
 
 
+command_names = {}
+for filename in os.listdir("commands"):
+    command_names[filename] = os.path.splitext(filename)[0]
+print(command_names)
+
 print("PyTerm 0.1")
 print("Currently in", sys.path[0])
 
 command = Command(input(">>> "))
-if command.base == "pwd":
-    print("here")
-    pwd()
-if command.base == "cd":
-    print("here")
-    cd(command.arguments[1])
-    pwd()
-if command.base == "touch":
-    touch(command.arguments[1])
-if command.base == "chmod":
-    chmod(command.arguments[1::])
+while command.base != "exit":
+    try:
+        command_ = getattr(commands.coreutils, command.base) # coreutils system
+        print(command_(command.arguments))
+
+    except AttributeError:
+        for key, value in command_names.items():
+            if command.base == value:
+                thing = importlib.import_module("commands", package=key)
+                command_ = getattr(getattr(thing, value), value)
+                print(command_(command.arguments))
+    command = Command(input(">>> "))
